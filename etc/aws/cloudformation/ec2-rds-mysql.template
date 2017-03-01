@@ -1,0 +1,155 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "T2D intial prototype",
+
+    "Parameters": {
+        "StackName": {
+            "Type": "String",
+            "Default": "t2d",
+            "MinLength": "1"
+        },
+        "Environment": {
+            "Type": "String",
+            "Default": "dev",
+            "MinLength": "1"
+        },
+        "KeyName": {
+            "Description" : "Name of an existing EC2 KeyPair to enable SSH access",
+            "Type": "AWS::EC2::KeyPair::KeyName",
+            "ConstraintDescription" : "must be the name of an existing EC2 KeyPair.",
+            "Default": "t2d"
+        },
+        "DBUser": {
+            "Type": "String",
+            "Default": "root",
+            "MinLength": "1"
+        },
+        "DBPassword": {
+            "Type": "String",
+            "Default": "password",
+            "MinLength": "1"
+        },
+        "VPCSubnets": {
+            "Description" : "List of public VPC subnets",
+            "Type": "CommaDelimitedList",
+            "ConstraintDescription" : "must be the name of an existing subnet.",
+            "Default": "subnet-98e775fd, subnet-9e466eb3, subnet-c4b22af8, subnet-566a4d0d, subnet-96e6ffdf"
+        }
+    },
+    "Resources": {
+
+        "Instance": {
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+                "ImageId": "ami-0b33d91d",
+                "InstanceType": "t2.micro",
+                "Tags" : [
+                    {
+                        "Key" : "Stack",
+                        "Value" : { "Ref": "StackName" }
+                    },{
+                        "Key" : "App",
+                        "Value" : "t2d"
+                    },{
+                        "Key" : "Env",
+                        "Value" : { "Ref": "Environment" }
+                    },
+                    {
+                        "Key" : "Name",
+                        "Value" : {"Fn::Join" : [ "", [ { "Ref": "StackName" }, "-", { "Ref": "Environment" } ] ]}
+                    }
+                ],
+                "KeyName": {
+                    "Ref": "KeyName"
+                },
+                "NetworkInterfaces": [ {
+                    "AssociatePublicIpAddress": "true",
+                    "DeviceIndex": "0",
+                    "GroupSet": [
+                        {
+                            "Ref": "InstanceSecurityGroup"
+                        }
+                    ],
+                    "SubnetId": "subnet-98e775fd"
+                }],
+                "UserData": { "Fn::Base64" : { "Fn::Join" : ["", [
+                    "#!/bin/bash -xe\n",
+                    "yum install -y git\n"
+                ]]}}
+            }
+        },
+        "InstanceSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "Security group for the instance",
+                "VpcId": "vpc-adea90cb",
+                "SecurityGroupIngress" : [{
+                    "IpProtocol" : "tcp",
+                    "FromPort" : "80",
+                    "ToPort" : "80",
+                    "CidrIp" : "0.0.0.0/0"
+                },{
+                    "IpProtocol" : "tcp",
+                    "FromPort" : "22",
+                    "ToPort" : "22",
+                    "CidrIp" : "0.0.0.0/0"
+                }]
+            }
+        },
+
+        "DB": {
+            "Type": "AWS::RDS::DBInstance",
+            "Properties": {
+                "PubliclyAccessible": "false",
+                "AllocatedStorage": "10",
+                "DBInstanceClass": "db.t2.micro",
+                "StorageType": "gp2",
+                "AllowMajorVersionUpgrade": "true",
+                "DBSubnetGroupName": {"Ref" : "DBSubnetGroup"},
+                "Tags" : [ {
+                    "Key" : "Stack",
+                    "Value" : { "Ref": "StackName" }
+                },{
+                    "Key" : "Owner",
+                    "Value" : "chubaws@teamaol.com"
+                },{
+                    "Key" : "Env",
+                    "Value" : { "Ref": "Environment" }
+                },{
+                    "Key" : "Name",
+                    "Value" : {"Fn::Join" : [ "", [ { "Ref": "StackName" }, "-db-", { "Ref": "Environment" } ] ]}
+                }],
+                "VPCSecurityGroups" : [ { "Fn::GetAtt": [ "DBSecurityGroup", "GroupId" ] } ],
+                "Engine": "MySQL",
+                "EngineVersion": "5.7.16",
+                "BackupRetentionPeriod": 0,
+                "MultiAZ": "false",
+                "MasterUsername": { "Ref": "DBUser" },
+                "MasterUserPassword": { "Ref": "DBPassword" }
+            }
+        },
+        "DBSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "GroupDescription": "Access from contenthub api web servers only",
+                "VpcId": "vpc-adea90cb",
+                "SecurityGroupIngress" : [{
+                    "IpProtocol" : "tcp",
+                    "FromPort" : "3306",
+                    "ToPort" : "3306",
+                    "SourceSecurityGroupId" : { "Ref" : "InstanceSecurityGroup" }
+                }]
+            }
+        },
+        "DBSubnetGroup" : {
+            "Type" : "AWS::RDS::DBSubnetGroup",
+            "Properties" : {
+                "DBSubnetGroupDescription" : "DB subnet group for DB",
+                "SubnetIds" : { "Ref": "VPCSubnets" }
+            }
+        }
+
+
+    },
+    "Outputs": {}
+}
