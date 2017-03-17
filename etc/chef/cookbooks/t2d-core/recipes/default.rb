@@ -18,6 +18,10 @@ end
 
 
 
+package ['git', 'net-tools', 'emacs'] do
+  action :install
+end
+
 package ['php71-php-cli', 'php71-php-fpm', 'php71-php-mysqlnd', 'php71-php-mbstring', 'php71-php-xml'] do
   action :install
 end
@@ -53,3 +57,9 @@ directory "/var/log/php-fpm" do
   action :create
 end
 
+directory "/var/www/log" do
+  owner 'www-data'
+  group 'www-data'
+  mode '0755'
+  action :create
+end
