@@ -140,7 +140,7 @@
                 }],
                 "UserData": { "Fn::Base64" : { "Fn::Join" : ["", [
                     "#!/bin/bash -xe\n",
-                    "yum install -y git\n"
+                    "curl -L https://omnitruck.chef.io/install.sh | sudo bash\n"
                 ]]}}
             }
         },
