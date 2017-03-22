@@ -1,0 +1,7 @@
+DEPENDENCIES
+  aws-codedeploy
+    path: .
+    metadata: true
+
+GRAPH
+  aws-codedeploy (0.1.0)

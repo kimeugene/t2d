@@ -1,0 +1,7 @@
+name             'aws-codedeploy'
+maintainer       'Eugene Kim'
+maintainer_email 'YOUR_EMAIL'
+license          'All rights reserved'
+description      'Installs/Configures aws-codedeploy'
+long_description 'Installs/Configures aws-codedeploy'
+version          '0.1.0'
