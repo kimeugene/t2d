@@ -37,10 +37,73 @@
         }
     },
     "Resources": {
+        "S3bucket": {
+            "Type" : "AWS::S3::Bucket",
+            "Properties" : {
+                "BucketName" : "t2d-codedeploy"
+            }
+        },
+        "IAMPolicy": {
+            "Type" : "AWS::IAM::Policy",
+            "Properties" : {
+                "PolicyDocument" : {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "s3:Get*",
+                                "s3:List*"
+                            ],
+                            "Resource": [
+                                "arn:aws:s3:::t2d-codedeploy/*",
+                                "arn:aws:s3:::aws-codedeploy-us-east-1/*"
+                            ]
+                        },
+                        {
+                            "Action": [
+                                "ec2:DescribeTags",
+                                "ec2:DescribeInstances"
+                            ],
+                            "Effect": "Allow",
+                            "Resource": [
+                                "*"
+                            ]
+                        }
+                    ]
+                },
+                "PolicyName" : "allow-s3-access",
+                "Roles" : [ { "Ref": "Role" } ]
+            }
+        },
+        "Role": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "RoleName": "t2d-codedeploy",
+                "Path": "/",
+                "AssumeRolePolicyDocument": {
+                    "Statement": [{
+                        "Action": [ "sts:AssumeRole" ],
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": [ "ec2.amazonaws.com" ]
+                        }
+                    }]
+                }
+            }
+        },
+        "InstanceProfile": {
+            "Type": "AWS::IAM::InstanceProfile",
+            "Properties": {
+                "Path": "/",
+                "Roles": [ { "Ref": "Role"} ]
+            }
+        },
 
         "Instance": {
             "Type": "AWS::EC2::Instance",
             "Properties": {
+                "IamInstanceProfile": {"Ref": "InstanceProfile"},
                 "ImageId": "ami-0b33d91d",
                 "InstanceType": "t2.micro",
                 "Tags" : [
@@ -50,6 +113,9 @@
                     },{
                         "Key" : "App",
                         "Value" : "t2d"
+                    },{
+                        "Key" : "Deployment_group",
+                        "Value" : {"Fn::Join" : [ "", [ "web-", { "Ref": "Environment" } ] ]}
                     },{
                         "Key" : "Env",
                         "Value" : { "Ref": "Environment" }
@@ -87,6 +153,11 @@
                     "IpProtocol" : "tcp",
                     "FromPort" : "80",
                     "ToPort" : "80",
+                    "CidrIp" : "0.0.0.0/0"
+                },{
+                    "IpProtocol" : "tcp",
+                    "FromPort" : "8080",
+                    "ToPort" : "8080",
                     "CidrIp" : "0.0.0.0/0"
                 },{
                     "IpProtocol" : "tcp",
@@ -146,6 +217,82 @@
             "Properties" : {
                 "DBSubnetGroupDescription" : "DB subnet group for DB",
                 "SubnetIds" : { "Ref": "VPCSubnets" }
+            }
+        },
+
+        "APIDnsRecord": {
+            "Type": "AWS::Route53::RecordSet",
+            "Properties": {
+                "HostedZoneName": "cartexted.com.",
+                "Comment": "API DNS record",
+                "Name": "api.cartexted.com",
+                "Type": "A",
+                "TTL": "300",
+                "ResourceRecords": [
+                    {
+                        "Fn::GetAtt": [
+                            "Instance",
+                            "PublicIp"
+                        ]
+                    }
+                ]
+            }
+        },
+
+        "JenkinsDnsRecord": {
+            "Type": "AWS::Route53::RecordSet",
+            "Properties": {
+                "HostedZoneName": "cartexted.com.",
+                "Comment": "API DNS record",
+                "Name": "jenkins.cartexted.com",
+                "Type": "A",
+                "TTL": "300",
+                "ResourceRecords": [
+                    {
+                        "Fn::GetAtt": [
+                            "Instance",
+                            "PublicIp"
+                        ]
+                    }
+                ]
+            }
+        },
+
+        "CodeDeployApp": {
+            "Type" : "AWS::CodeDeploy::Application",
+            "Properties" : {
+                "ApplicationName" : "t2d"
+            }
+        },
+        "CodeDeployDeploymentGroup": {
+            "Type" : "AWS::CodeDeploy::DeploymentGroup",
+            "DependsOn": "ServiceRole",
+            "Properties" : {
+                "ApplicationName" : { "Ref": "CodeDeployApp"},
+                "DeploymentConfigName" : "CodeDeployDefault.AllAtOnce",
+                "DeploymentGroupName" : "dev",
+                "Ec2TagFilters" : [ {
+                    "Key" : "Deployment_group",
+                    "Type" : "KEY_AND_VALUE",
+                    "Value" : {"Fn::Join" : [ "", [ "web-", { "Ref": "Environment" } ] ]}
+                }],
+                "ServiceRoleArn" : { "Fn::GetAtt" : [ "ServiceRole", "Arn" ]}
+            }
+        },
+        "ServiceRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "RoleName": "t2d-codedeploy-servicerole",
+                "Path": "/",
+                "AssumeRolePolicyDocument": {
+                    "Statement": [{
+                        "Action": [ "sts:AssumeRole" ],
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": [ "codedeploy.amazonaws.com" ]
+                        }
+                    }]
+                }
             }
         }
 
