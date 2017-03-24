@@ -26,7 +26,7 @@ os: linux
 files:
   - source: .
     destination: /var/www/deploy
-  - source: config/server/api.cartexted.com.conf
+  - source: etc/config/server/api.cartexted.com.conf
     destination: /etc/nginx/sites-enabled
 # For deployments to Amazon Linux and Ubuntu Server
 #   Amazon EC2 instances,
