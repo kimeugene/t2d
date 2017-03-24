@@ -103,14 +103,14 @@ hooks:
 ##      runas:
 # During the AfterInstall deployment lifecycle event, run the commands 
 #   in the script specified in "location".
-  AfterInstall:
+#  AfterInstall:
 ##    - location:
 ##      timeout:
 ##      runas:
 # During the ApplicationInstall deployment lifecycle event, run the commands 
 #   in the script specified in "location".
   ApplicationStart:
-    - location: scripts/reload_all.sh
+    - location: etc/scripts/reload_all.sh
       timeout: 10
       runas: root
 ##    - location:

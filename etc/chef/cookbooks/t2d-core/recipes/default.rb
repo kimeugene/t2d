@@ -17,6 +17,13 @@ user 'www-data' do
 end
 
 
+directory "/var/www/log" do
+  owner 'www-data'
+  group 'www-data'
+  mode '0755'
+  action :create
+end
+
 
 package ['git', 'net-tools', 'emacs'] do
   action :install
@@ -50,16 +57,7 @@ service "php71-php-fpm" do
   action [ :enable, :start ]
 end
 
-directory "/var/log/php-fpm" do
-  owner 'www-data'
-  group 'www-data'
-  mode '0755'
-  action :create
-end
-
-directory "/var/www/log" do
-  owner 'www-data'
-  group 'www-data'
-  mode '0755'
-  action :create
+execute 'create_symlink' do
+  command 'ln /usr/bin/php71 /usr/bin/php'
+  not_if { File.exists?("/usr/bin/php") }
 end

@@ -55,10 +55,18 @@
                             "Resource" : "*"
                         },
                         {
+                            "Action": [
+                                "s3:ListBucket"
+                            ],
+                            "Effect": "Allow",
+                            "Resource": [
+                                "arn:aws:s3:::t2d-codedeploy"
+                            ]
+                        },
+                        {
                             "Effect": "Allow",
                             "Action": [
-                                "s3:Get*",
-                                "s3:List*"
+                                "s3:*"
                             ],
                             "Resource": [
                                 "arn:aws:s3:::t2d-codedeploy/*",
@@ -282,6 +290,38 @@
                     "Value" : {"Fn::Join" : [ "", [ "web-", { "Ref": "Environment" } ] ]}
                 }],
                 "ServiceRoleArn" : { "Fn::GetAtt" : [ "ServiceRole", "Arn" ]}
+            }
+        },
+        "CodedeployIAMPolicy": {
+            "Type" : "AWS::IAM::Policy",
+            "Properties" : {
+                "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Action": [
+                                "autoscaling:PutLifecycleHook",
+                                "autoscaling:DeleteLifecycleHook",
+                                "autoscaling:DescribeLifecycleHooks",
+                                "autoscaling:RecordLifecycleActionHeartbeat",
+                                "autoscaling:CompleteLifecycleAction",
+                                "autoscaling:DescribeAutoscalingGroups",
+                                "autoscaling:PutInstanceInStandby",
+                                "autoscaling:PutInstanceInService",
+                                "ec2:Describe*"
+                            ],
+                            "Effect": "Allow",
+                            "Resource": "*"
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": "sns:Publish",
+                            "Resource": "*"
+                        }
+                    ]
+                },
+                "PolicyName" : "t2d-codedeploy-ec2",
+                "Roles" : [ { "Ref": "ServiceRole" } ]
             }
         },
         "ServiceRole": {

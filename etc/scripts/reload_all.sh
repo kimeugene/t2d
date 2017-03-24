@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#service nginx reload
+service nginx reload
 
-#service "$php_service" restart
+service php71-php-fpm restart
 
