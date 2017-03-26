@@ -17,7 +17,7 @@ user 'www-data' do
 end
 
 
-directory "/var/www/log" do
+directory "/var/www/logs" do
   owner 'www-data'
   group 'www-data'
   mode '0755'

@@ -25,7 +25,7 @@ os: linux
 #   may cause associated deployments to fail.
 files:
   - source: .
-    destination: /var/www/deploy
+    destination: /var/www/t2d
   - source: etc/config/server/api.cartexted.com.conf
     destination: /etc/nginx/sites-enabled
 # For deployments to Amazon Linux and Ubuntu Server
@@ -42,7 +42,7 @@ files:
 #   "permissions" section altogether. A blank or incomplete "permissions"
 #   section may cause associated deployments to fail.
 permissions:
-  - object: /var/www/deploy
+  - object: /var/www/t2d
     pattern: "**"
 ##    except:
     owner: www-data
