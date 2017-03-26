@@ -1,0 +1,11 @@
+DEPENDENCIES
+  t2d-mysql
+    path: .
+    metadata: true
+
+GRAPH
+  compat_resource (12.16.3)
+  t2d-mysql (0.1.0)
+    yum-mysql-community (~> 2.0.3)
+  yum-mysql-community (2.0.3)
+    compat_resource (>= 12.16.3)
