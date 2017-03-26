@@ -3,4 +3,3 @@
 # composer.lock
 .idea/
 vendor/
-/etc/chef/cookbooks/*/cookbooks
