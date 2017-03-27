@@ -28,11 +28,7 @@ $app->group('/user', function () use ($app) {
      *     ),
      * )
      */
-    $app->post('/email/auth', function ($request, $response, $args) {
-        $this->logger->info("Slim-Skeleton '/' route");
-
-        return json_encode([]);
-    });
+    $app->post('/email/auth', 'App\Controllers\UserController:init_email_auth');
 
     /**
      * @SWG\Post(

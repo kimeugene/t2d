@@ -15,5 +15,20 @@ return [
             'path' => __DIR__ . '/../logs/app.log',
             'level' => \Monolog\Logger::DEBUG,
         ],
+
+        // database
+        'db' => [
+            'driver' => 'mysql',
+            'host' => '127.0.0.1',
+            'database' => 't2d',
+            'username' => 'root',
+            'password' => '',
+            'collation' => 'utf8_general_ci',
+            'charset'   => 'utf8',
+            'prefix' => ''
+        ],
+
+
+        'auth_code_ttl' => 60 * 60 * 24 * 14,
     ],
 ];

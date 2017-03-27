@@ -1,4 +1,9 @@
 <?php
+use Illuminate\Database\Capsule\Manager as Capsule;
+use Illuminate\Events\Dispatcher;
+use Illuminate\Container\Container;
+
+
 // DIC configuration
 
 $container = $app->getContainer();
@@ -17,3 +22,10 @@ $container['logger'] = function ($c) {
     $logger->pushHandler(new Monolog\Handler\StreamHandler($settings['path'], $settings['level']));
     return $logger;
 };
+
+// bootstrap eloquent ORM
+$capsule = new Capsule;
+$capsule->addConnection($container->settings['db']);
+$capsule->setEventDispatcher(new Dispatcher(new Container));
+$capsule->setAsGlobal();
+$capsule->bootEloquent();
