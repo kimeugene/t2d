@@ -2,7 +2,7 @@
 
 namespace App\Controllers;
 
-use App\Models\User;
+
 
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -12,19 +12,39 @@ class UserController extends BaseController
 {
     public function init_email_auth(ServerRequestInterface $request, ResponseInterface $response, $args)
     {
-        $this->container->get('logger')->info("Slim-Skeleton '/' route");
+        try
+        {
+            $this->container->get('logger')->info("Slim-Skeleton '/' route");
 
 
-        $body = $request->getParsedBody();
-        $email = $body['email'];
+            $request_body = $request->getParsedBody();
+            $email = $request_body['email'];
 
-        $auth_code = bin2hex(random_bytes(20));
 
-        $user = new User();
-        $user->email = $email;
-        $user->auth_code = $auth_code;
-        $user->auth_code_ttl = time() + $this->settings['auth_code_ttl'];
 
-        $user->save();
+
+            $this->container->get('email_service')->send_email($email, $auth_code);
+            $status = 200;
+        }
+        catch (SesException $e)
+        {
+            $this->logger->error(sprintf('%s: %s', "Could not send email (SES)", $e->getMessage()));
+        }
+        catch (AwsException $e)
+        {
+            $this->logger->error(sprintf('%s: %s', "Could not send email (AWS)", $e->getMessage()));
+        }
+        catch (Exception $e)
+        {
+            $this->logger->error(sprintf('%s: %s', "Could not send email", $e->getMessage()));
+        }
+
+
+        $response = $response->withStatus($status);
+        $response = $response->withHeader('Content-Type', 'application/json');
+        $response->getBody()->write("OK");
+
+        return $response;
+
     }
 }

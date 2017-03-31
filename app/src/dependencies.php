@@ -2,7 +2,7 @@
 use Illuminate\Database\Capsule\Manager as Capsule;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Container\Container;
-
+use App\Services\EmailService;
 
 // DIC configuration
 
@@ -21,6 +21,11 @@ $container['logger'] = function ($c) {
     $logger->pushProcessor(new Monolog\Processor\UidProcessor());
     $logger->pushHandler(new Monolog\Handler\StreamHandler($settings['path'], $settings['level']));
     return $logger;
+};
+
+// email service
+$container['email_service'] = function ($c) {
+    return new EmailService($c->get('logger'));
 };
 
 // bootstrap eloquent ORM

@@ -29,7 +29,7 @@ package ['git', 'net-tools', 'emacs'] do
   action :install
 end
 
-package ['php71-php-cli', 'php71-php-fpm', 'php71-php-mysqlnd', 'php71-php-mbstring', 'php71-php-xml', 'php71-php-zip'] do
+package ['php71-php-cli', 'php71-php-fpm', 'php71-php-mysqlnd', 'php71-php-mbstring', 'php71-php-xml', 'php71-php-pecl-zip'] do
   action :install
 end
 

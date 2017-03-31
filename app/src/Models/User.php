@@ -12,5 +12,6 @@ class User extends Model
 
     protected $primaryKey = 'id';
     protected $table = 'users';
+    protected $hidden = ['id'];
 
 }

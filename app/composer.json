@@ -20,7 +20,8 @@
         "illuminate/database": "*",
         "illuminate/events": "*",
         "robmorgan/phinx": "^0.8.0",
-        "ramsey/uuid": "^3.6"
+        "ramsey/uuid": "^3.6",
+        "aws/aws-sdk-php": "^3.24"
     },
     "autoload": {
         "psr-4": {
