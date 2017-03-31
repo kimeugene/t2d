@@ -1,0 +1,45 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# This file is intended for local development setup. See README for details.
+
+
+Vagrant.configure(2) do |config|
+
+  config.vm.box = "centos/7"
+#  config.vm.box_url = "https://atlas.hashicorp.com/centos/boxes/7/versions/1602.02/providers/virtualbox.box"
+   config.vm.box_check_update = true
+  
+  config.vm.synced_folder "./", "/vagrant", id: "vagrant-root", type: "virtualbox",
+    owner: "www-data",
+    group: "www-data",
+    mount_options: ["dmode=775,fmode=665"]
+
+  config.vm.network "forwarded_port", guest: 80, host: 8080
+  config.vm.network "forwarded_port", guest: 443, host: 8443
+
+
+  config.vm.hostname = "t2d"
+
+
+  config.vm.provider "virtualbox" do |vb|
+     vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+     vb.name = config.vm.hostname
+     vb.memory = 2048
+     vb.cpus = 8
+  end
+
+  # Get the latest chef client and create links to source files
+  config.vm.provision "shell", inline: <<-SHELL
+      if [[ ! -f ~/.bootstrap ]]; then
+          curl -L https://chef.io/chef/install.sh | bash;
+	  rpm -i https://packages.chef.io/files/stable/chefdk/1.2.22/el/7/chefdk-1.2.22-1.el7.x86_64.rpm
+          mkdir -p /var/www;
+	  groupadd www-data
+	  useradd www-data -g www-data
+          touch ~/.bootstrap
+      fi
+  SHELL
+
+end
+
