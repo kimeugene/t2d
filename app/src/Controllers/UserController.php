@@ -2,8 +2,6 @@
 
 namespace App\Controllers;
 
-
-
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -12,39 +10,39 @@ class UserController extends BaseController
 {
     public function init_email_auth(ServerRequestInterface $request, ResponseInterface $response, $args)
     {
+        $status = 500;
+        $message = ["message" => "Not OK"];
+        
         try
         {
-            $this->container->get('logger')->info("Slim-Skeleton '/' route");
-
-
             $request_body = $request->getParsedBody();
             $email = $request_body['email'];
 
-
-
-
-            $this->container->get('email_service')->send_email($email, $auth_code);
-            $status = 200;
+            /** @var UserService $user_service */
+            $user_service = $this->container->get('user_service');
+            $result = $user_service->createOrUpdateUser(
+                $email,
+                $this->container->get('settings')['auth_code_ttl']
+            );
+            if ($result)
+            {
+                /** @var EmailService $email_service */
+                $email_service = $this->container->get('email_service');
+                if ($email_service->send_email($email, $result['auth_code'], $result['new_user']))
+                {
+                    $status = 200;
+                    $message = ["message" => "OK"];
+                }
+            }
         }
-        catch (SesException $e)
-        {
-            $this->logger->error(sprintf('%s: %s', "Could not send email (SES)", $e->getMessage()));
-        }
-        catch (AwsException $e)
-        {
-            $this->logger->error(sprintf('%s: %s', "Could not send email (AWS)", $e->getMessage()));
-        }
-        catch (Exception $e)
+        catch (\Exception $e)
         {
             $this->logger->error(sprintf('%s: %s', "Could not send email", $e->getMessage()));
         }
 
-
         $response = $response->withStatus($status);
-        $response = $response->withHeader('Content-Type', 'application/json');
-        $response->getBody()->write("OK");
+        $response->getBody()->write(json_encode($message));
 
         return $response;
-
     }
 }

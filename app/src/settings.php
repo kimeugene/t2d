@@ -2,6 +2,7 @@
 return [
     'settings' => [
         'displayErrorDetails' => true, // set to false in production
+        'determineRouteBeforeAppMiddleware' => true,
         'addContentLengthHeader' => false, // Allow the web server to send the content-length header
 
         // Renderer settings

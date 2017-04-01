@@ -1,4 +1,9 @@
 <?php
-// Application middleware
 
-// e.g: $app->add(new \Slim\Csrf\Guard);
+use App\Middleware\Preflight;
+$app->add(new Preflight($app->getContainer()));
+
+
+
+
+
