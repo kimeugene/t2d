@@ -60,11 +60,7 @@ $app->group('/user', function () use ($app) {
      *     ),
      * )
      */
-    $app->post('/email/confirm', function ($request, $response, $args) {
-        $this->logger->info("Slim-Skeleton '/' route");
-
-        return json_encode([]);
-    });
+    $app->post('/email/confirm', 'App\Controllers\UserController:confirm_email');
 
     /**
      * @SWG\Post(
