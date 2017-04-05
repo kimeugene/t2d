@@ -39,7 +39,7 @@ class UserController extends BaseController
                 if ($email_service->send_email($email, $result['auth_code'], $result['new_user']))
                 {
                     $status = 200;
-                    $message = ["message" => "OK"];
+                    $message = ["message" => "OK", "can_resend" => true];
                 }
             }
         }
@@ -56,35 +56,22 @@ class UserController extends BaseController
 
     public function confirm_email(ServerRequestInterface $request, ResponseInterface $response, $args)
     {
-        $status = 500;
-        $message = ["message" => "Failed to send email"];
+        $request_body = $request->getParsedBody();
+        $code = $request_body["code"];
 
-        try
-        {
-            $request_body = $request->getParsedBody();
-            $email = $request_body['code'];
+        $user_service = $this->container->get('user_service');
+        $result = $user_service->getUserByCode($code);
 
-            /** @var UserService $user_service */
-            $user_service = $this->container->get('user_service');
-            $result = $user_service->createOrUpdateUser(
-                $email,
-                $this->container->get('settings')['auth_code_ttl']
-            );
-            if ($result)
-            {
-                /** @var EmailService $email_service */
-                $email_service = $this->container->get('email_service');
-                if ($email_service->send_email($email, $result['auth_code'], $result['new_user']))
-                {
-                    $status = 200;
-                    $message = ["message" => "OK"];
-                }
-            }
+        if($result == true){
+            $status = 200;
+            $message = ["message" => "OK"];
         }
-        catch (\Exception $e)
-        {
-            $this->logger->error(sprintf('%s: %s', "Could not send email", $e->getMessage()));
+        else {
+            $status = 400;
+            $message = ["message" => "Not OK"];
         }
+
+
 
         $response = $response->withStatus($status);
         $response->getBody()->write(json_encode($message));

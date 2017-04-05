@@ -24,12 +24,13 @@ class UserService extends BaseService
                 $user->email = $email;
                 $user->auth_code = $auth_code;
                 $user->auth_code_ttl = time() + $auth_code_ttl;
+                $user->sent_attempts = 0;
 
                 $new_user = true;
             }
 
             // auth code expired?
-            if (time() - $user['auth_code_ttl'] > 0)
+            elseif (time() - $user['auth_code_ttl'] > 0)
             {
                 $user->auth_code = $auth_code;
                 $user->auth_code_ttl = time() + $auth_code_ttl;
@@ -52,4 +53,16 @@ class UserService extends BaseService
         return false;
     }
 
+    public function getUserByCode($code){
+        $user = User::where('auth_code', $code)->first();
+        if (is_null($user))
+        {
+            return false;
+        }else
+        {
+            return true;
+        }
+
+    }
 }
+
