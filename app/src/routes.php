@@ -28,7 +28,7 @@ $app->group('/user', function () use ($app) {
      *     ),
      * )
      */
-    $app->post('/email/auth', 'App\Controllers\UserController:init_email_auth');
+    $app->post('/email/auth', 'App\Controllers\UserController:initEmailAuth');
 
     /**
      * @SWG\Post(
@@ -47,10 +47,6 @@ $app->group('/user', function () use ($app) {
      *         description="Email confirmed"
      *     ),
      *     @SWG\Response(
-     *         response="201",
-     *         description="Email confirmed and user created"
-     *     ),
-     *     @SWG\Response(
      *         response="400",
      *         description="Invalid code"
      *     ),
@@ -60,7 +56,7 @@ $app->group('/user', function () use ($app) {
      *     ),
      * )
      */
-    $app->post('/email/confirm', 'App\Controllers\UserController:confirm_email');
+    $app->post('/email/confirm', 'App\Controllers\UserController:confirmEmail');
 
     /**
      * @SWG\Post(
@@ -166,8 +162,7 @@ $app->group('/user', function () use ($app) {
 
      * )
      */
-    $app->get('/plates', function ($request, $response, $args) {
-    });
+    $app->get('/plates', 'App\Controllers\UserController:getPlates');
 
     /**
      * @SWG\Post(
@@ -177,26 +172,12 @@ $app->group('/user', function () use ($app) {
      *     @SWG\Parameter(
      *      name="code",
      *      in="body",
-     *      description="Auth code sent to user",
+     *      description="Plate parameters",
      *      required=true,
-     *      type="string",
-     *     ),
-     *     @SWG\Parameter(
-     *      name="plate",
-     *      in="body",
-     *      description="License plate to add",
-     *      required=true,
-     *      type="string",
-     *     ),
-     *     @SWG\Parameter(
-     *      name="state",
-     *      in="body",
-     *      description="State where license plate is registered",
-     *      required=true,
-     *      type="string",
+     *      @SWG\Schema(ref="#/definitions/PlateParameters")
      *     ),
      *     @SWG\Response(
-     *         response="200",
+     *         response="201",
      *         description="Plate created"
      *     ),
      *     @SWG\Response(
@@ -205,11 +186,7 @@ $app->group('/user', function () use ($app) {
      *     ),
      * )
      */
-    $app->post('/plate', function ($request, $response, $args) {
-        $this->logger->info("Slim-Skeleton '/' route");
-
-        return json_encode([]);
-    });
+    $app->post('/plate', 'App\Controllers\UserController:addPlate');
 
     /**
      * @SWG\Delete(
@@ -244,11 +221,7 @@ $app->group('/user', function () use ($app) {
      *     ),
      * )
      */
-    $app->delete('/plate', function ($request, $response, $args) {
-        $this->logger->info("Slim-Skeleton '/' route");
-
-        return json_encode([]);
-    });
+    $app->delete('/plate', 'App\Controllers\UserController:deletePlate');
 
 
 });
@@ -340,6 +313,29 @@ $app->get('/swagger', function ($request, $response, $args) {
 
 /**
  * @SWG\Definition(
+ *     definition="PlateParameters",
+ *      required={"code", "plate", "state"},
+ *     @SWG\Property(
+ *         property="code",
+ *         description="Auth code to identify the user",
+ *         type="string"
+ *     ),
+ *     @SWG\Property(
+ *         property="plate",
+ *         description="License plate to add",
+ *         type="string"
+ *     ),
+ *     @SWG\Property(
+ *         property="state",
+ *         description="State where license plate is registered",
+ *         type="string"
+ *     )
+ * )
+ *
+ */
+
+/**
+ * @SWG\Definition(
  *     definition="Plate",
  *         @SWG\Property(
  *             property="plate",
@@ -352,7 +348,7 @@ $app->get('/swagger', function ($request, $response, $args) {
  *             type="string",
  *         ),
  * )
- *
+ */
 
 /**
  * @SWG\Definition(
@@ -369,7 +365,7 @@ $app->get('/swagger', function ($request, $response, $args) {
  *         )
  *     )
  * )
- *
+ */
 
 /**
  * @SWG\Definition(

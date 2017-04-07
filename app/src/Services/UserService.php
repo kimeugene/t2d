@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Database\QueryException;
 use App\Models\User;
+use App\Models\Plate;
 
 class UserService extends BaseService
 {
@@ -11,25 +12,21 @@ class UserService extends BaseService
     {
         try
         {
-            $user = User::where('email', $email)->first();
-            $new_user = false;
+            $user = $this->getUserBy('email', $email);
 
             $auth_code = bin2hex(
                 random_bytes(20)
             );
 
-            if (is_null($user))
+            if (!$user)
             {
                 $user = new User();
                 $user->email = $email;
                 $user->auth_code = $auth_code;
                 $user->auth_code_ttl = time() + $auth_code_ttl;
-                $user->sent_attempts = 0;
-
-                $new_user = true;
+                $user->confirmed = null;
             }
-
-            // auth code expired?
+            // auth code expired? renew the auth code
             elseif (time() - $user['auth_code_ttl'] > 0)
             {
                 $user->auth_code = $auth_code;
@@ -38,7 +35,7 @@ class UserService extends BaseService
 
             $user->save();
 
-            return ['new_user' => $new_user, 'auth_code' => $user['auth_code']];
+            return $user;
 
         }
         catch (QueryException $e)
@@ -47,20 +44,116 @@ class UserService extends BaseService
         }
         catch (\Exception $e)
         {
-            $this->logger->error("Cannot createOrUpdate user, exception: " . $e->getMessage());
+            $this->logger->error(__FUNCTION__ . " failed, exception: " . $e->getMessage());
         }
 
         return false;
     }
 
-    public function getUserByCode($code){
-        $user = User::where('auth_code', $code)->first();
-        if (is_null($user))
+    public function getUserBy($column, $value)
+    {
+        try
         {
-            return false;
-        }else
+            $user = User::where($column, $value)->first();
+            if (!is_null($user))
+            {
+                return $user;
+            }
+        }
+        catch (QueryException $e)
         {
+            $this->logger->error("DB exception: " . $e->getMessage() . ", query: " . $e->getSql());
+        }
+        catch (\Exception $e)
+        {
+            $this->logger->error(__FUNCTION__ . " failed, exception: " . $e->getMessage());
+        }
+
+        return false;
+    }
+
+    public function confirmEmail($code)
+    {
+        $user = $this->getUserBy('auth_code', $code);
+
+        if ($user)
+        {
+            if ($user['confirmed'])
+            {
+                return true;
+            }
+            else
+            {
+                $user = $this->getUserBy('email', $user['email']);
+                if ($user)
+                {
+                    $user->confirmed = date("Y-m-d H:i:s");
+                    $user->save();
+                    return true;
+                }
+                else
+                {
+                    $this->logger->error("this should never happen: user id: " . $user['id']);
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public function isValid($code)
+    {
+        $user = $this->getUserBy('auth_code', $code);
+
+        if ($user)
+        {
+            if ($user['confirmed'] && (time() - $user['auth_code_ttl'] < 0))
+            {
+                return $user;
+            }
+        }
+
+        return false;
+    }
+
+    public function addPlate($user, $plate, $state)
+    {
+        try
+        {
+            $plate_model = new Plate();
+            $plate_model->email = $user['email'];
+            $plate_model->plate = $plate;
+            $plate_model->state = $state;
+
+            $plate_model->save();
+
             return true;
+        }
+        catch (QueryException $e)
+        {
+            $this->logger->error("DB exception: " . $e->getMessage() . ", query: " . $e->getSql());
+        }
+        catch (\Exception $e)
+        {
+            $this->logger->error(__FUNCTION__ . " failed, exception: " . $e->getMessage());
+        }
+
+        return false;
+    }
+
+    public function getPlates($user)
+    {
+        try
+        {
+            return Plate::where('email', $user['email'])->get();
+        }
+        catch (QueryException $e)
+        {
+            $this->logger->error("DB exception: " . $e->getMessage() . ", query: " . $e->getSql());
+        }
+        catch (\Exception $e)
+        {
+            $this->logger->error(__FUNCTION__ . " failed, exception: " . $e->getMessage());
         }
 
     }

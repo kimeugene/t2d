@@ -30,12 +30,28 @@ class InitialMigration extends AbstractMigration
         $exists = $this->hasTable('users');
         if (!$exists) {
             $table = $this->table('users', array('id' => false, 'primary_key' => array('id')));
-            $table->addColumn('id', 'string', array('limit' => 36))
-                ->addColumn('email', 'string', array('limit' => 100))
+            $table->addColumn('id', 'string', array('limit' => 36, 'null' => false))
+                ->addColumn('email', 'string', array('limit' => 100, 'null' => false, 'default' => ''))
+                ->addColumn('confirmed', 'datetime', array('default' => null, 'null' => true))
                 ->addColumn('auth_code', 'string', array('limit' => 100))
                 ->addColumn('auth_code_ttl', 'integer')
                 ->addColumn('created_at', 'datetime')
                 ->addColumn('updated_at', 'datetime')
+                ->addColumn('deleted_at', 'datetime', array('default' => null, 'null' => true))
+                ->addIndex(array('email'))
+                ->create();
+        }
+
+        $exists = $this->hasTable('plates');
+        if (!$exists) {
+            $table = $this->table('plates', array('id' => false, 'primary_key' => array('email')));
+            $table->addColumn('email', 'string', array('limit' => 100))
+                ->addColumn('plate', 'string', array('limit' => 15))
+                ->addColumn('state', 'string', array('limit' => 2))
+                ->addColumn('created_at', 'datetime')
+                ->addColumn('updated_at', 'datetime')
+                ->addColumn('deleted_at', 'datetime', array('default' => null, 'null' => true))
+                ->addIndex(array('email'))
                 ->create();
         }
 

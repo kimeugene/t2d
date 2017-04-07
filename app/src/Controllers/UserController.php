@@ -16,7 +16,7 @@ class UserController extends BaseController
      * @param $args
      * @return ResponseInterface|static
      */
-    public function init_email_auth(ServerRequestInterface $request, ResponseInterface $response, $args)
+    public function initEmailAuth(ServerRequestInterface $request, ResponseInterface $response)
     {
         $status = 500;
         $message = ["message" => "Failed to send email"];
@@ -28,15 +28,16 @@ class UserController extends BaseController
 
             /** @var \App\Services\UserService $user_service */
             $user_service = $this->container->get('user_service');
-            $result = $user_service->createOrUpdateUser(
+            $user = $user_service->createOrUpdateUser(
                 $email,
                 $this->container->get('settings')['auth_code_ttl']
             );
-            if ($result)
+
+            if ($user)
             {
-                /** @var EmailService $email_service */
+                /** @var \App\Services\EmailService $email_service */
                 $email_service = $this->container->get('email_service');
-                if ($email_service->send_email($email, $result['auth_code'], $result['new_user']))
+                if ($email_service->send_email($email, $user['auth_code']))
                 {
                     $status = 200;
                     $message = ["message" => "OK", "can_resend" => true];
@@ -54,24 +55,31 @@ class UserController extends BaseController
         return $response;
     }
 
-    public function confirm_email(ServerRequestInterface $request, ResponseInterface $response, $args)
+    public function confirmEmail(ServerRequestInterface $request, ResponseInterface $response)
     {
         $request_body = $request->getParsedBody();
         $code = $request_body["code"];
 
-        $user_service = $this->container->get('user_service');
-        $result = $user_service->getUserByCode($code);
-
-        if($result == true){
-            $status = 200;
-            $message = ["message" => "OK"];
-        }
-        else {
+        if (empty($code))
+        {
             $status = 400;
-            $message = ["message" => "Not OK"];
+            $message = ["message" => "Missing code"];
         }
+        else
+        {
+            /** @var \App\Services\UserService $user_service */
+            $user_service = $this->container->get('user_service');
+            $result = $user_service->confirmEmail($code);
 
-
+            if($result == true){
+                $status = 200;
+                $message = ["message" => "OK"];
+            }
+            else {
+                $status = 400;
+                $message = ["message" => "Invalid code"];
+            }
+        }
 
         $response = $response->withStatus($status);
         $response->getBody()->write(json_encode($message));
@@ -79,5 +87,62 @@ class UserController extends BaseController
         return $response;
     }
 
+    public function getPlates(ServerRequestInterface $request, ResponseInterface $response)
+    {
+        $request_body = $request->getParsedBody();
+        $code = $request_body['code'];
+
+        /** @var \App\Services\UserService $user_service */
+        $user_service = $this->container->get('user_service');
+
+        $user = $user_service->getUserByCode($code);
+        if ($user && $user['confirmed'])
+        {
+            $user_service->getPlates();
+        }
+        else
+        {
+            $status = 401;
+            $message = ["message" => "Unauthorized"];
+        }
+
+        $response = $response->withStatus($status);
+        $response->getBody()->write(json_encode($message));
+
+        return $response;
+    }
+
+    public function addPlate(ServerRequestInterface $request, ResponseInterface $response)
+    {
+        $request_body = $request->getParsedBody();
+        $code = $request_body['code'];
+
+        $status = 500;
+        $message = ["message" => "Cannot add plate"];
+
+        /** @var \App\Services\UserService $user_service */
+        $user_service = $this->container->get('user_service');
+
+        $user = $user_service->isValid($code);
+        if ($user)
+        {
+            if ($user_service->addPlate($user, $request_body['plate'], $request_body['state']))
+            {
+                $status = 200;
+                $message = "OK";
+            }
+        }
+        else
+        {
+            $status = 401;
+            $message = ["message" => "Unauthorized"];
+        }
+
+        $response = $response->withStatus($status);
+        $response->getBody()->write(json_encode($message));
+
+        return $response;
+
+    }
 
 }

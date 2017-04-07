@@ -10,7 +10,7 @@ use Aws\Exception\AwsException;
 
 class EmailService extends BaseService
 {
-    public function send_email($email_address, $auth_code, $new_user = true)
+    public function send_email($email_address, $auth_code)
     {
         $this->logger->info("Senging email to: " . $email_address);
 
