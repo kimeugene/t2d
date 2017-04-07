@@ -156,6 +156,8 @@ class UserService extends BaseService
             $this->logger->error(__FUNCTION__ . " failed, exception: " . $e->getMessage());
         }
 
+        return false;
+
     }
 }
 

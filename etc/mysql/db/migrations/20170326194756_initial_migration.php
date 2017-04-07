@@ -44,7 +44,7 @@ class InitialMigration extends AbstractMigration
 
         $exists = $this->hasTable('plates');
         if (!$exists) {
-            $table = $this->table('plates', array('id' => false, 'primary_key' => array('email')));
+            $table = $this->table('plates', array('id' => false));
             $table->addColumn('email', 'string', array('limit' => 100))
                 ->addColumn('plate', 'string', array('limit' => 15))
                 ->addColumn('state', 'string', array('limit' => 2))

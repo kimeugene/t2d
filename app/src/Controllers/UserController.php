@@ -89,22 +89,41 @@ class UserController extends BaseController
 
     public function getPlates(ServerRequestInterface $request, ResponseInterface $response)
     {
-        $request_body = $request->getParsedBody();
-        $code = $request_body['code'];
+        $params = $request->getQueryParams();
 
-        /** @var \App\Services\UserService $user_service */
-        $user_service = $this->container->get('user_service');
-
-        $user = $user_service->getUserByCode($code);
-        if ($user && $user['confirmed'])
+        if (isset($params['code']) && !empty($params['code']))
         {
-            $user_service->getPlates();
+            /** @var \App\Services\UserService $user_service */
+            $user_service = $this->container->get('user_service');
+
+            $user = $user_service->isValid($params['code']);
+            if ($user)
+            {
+                $plates = $user_service->getPlates($user);
+                foreach ($plates as $plate)
+                {
+                    $result['plates'][] = [
+                        'plate' => $plate->plate,
+                        'created' => $plate->created_at
+                    ];
+                }
+                $result['max_plates_allowed'] = $this->container->get('settings')['max_plates_allowed'];
+                $message = $result;
+                $status = 200;
+            }
+            else
+            {
+                $status = 401;
+                $message = ["message" => "Unauthorized"];
+            }
+
         }
         else
         {
-            $status = 401;
-            $message = ["message" => "Unauthorized"];
+            $status = 400;
+            $message = "Missing code";
         }
+
 
         $response = $response->withStatus($status);
         $response->getBody()->write(json_encode($message));
@@ -128,7 +147,7 @@ class UserController extends BaseController
         {
             if ($user_service->addPlate($user, $request_body['plate'], $request_body['state']))
             {
-                $status = 200;
+                $status = 201;
                 $message = "OK";
             }
         }

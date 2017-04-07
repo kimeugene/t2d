@@ -31,5 +31,6 @@ return [
 
 
         'auth_code_ttl' => 60 * 60 * 24 * 14,
+        'max_plates_allowed' => 2
     ],
 ];

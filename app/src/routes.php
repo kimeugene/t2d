@@ -10,9 +10,9 @@ $app->group('/user', function () use ($app) {
      *     @SWG\Parameter(
      *      name="email",
      *      in="body",
-     *      description="User email address",
+     *      description="User email",
      *      required=true,
-     *      type="string",
+     *      @SWG\Schema(ref="#/definitions/EmailParameter")
      *     ),
      *     @SWG\Response(
      *         response="200",
@@ -36,11 +36,11 @@ $app->group('/user', function () use ($app) {
      *     tags={"User APIs"},
      *     summary="Authenticate existing user or create new user",
      *     @SWG\Parameter(
-     *      name="code",
-     *      in="body",
-     *      description="Auth code sent to user",
-     *      required=true,
-     *      type="string",
+     *         name="email",
+     *         in="body",
+     *         description="User email",
+     *         required=true,
+     *         @SWG\Schema(ref="#/definitions/CodeParameter")
      *     ),
      *     @SWG\Response(
      *         response="200",
@@ -129,7 +129,7 @@ $app->group('/user', function () use ($app) {
      *     tags={"User APIs"},
      *     summary="Retrieve user plates",
      *     @SWG\Parameter(
-     *      name="auth_code",
+     *      name="code",
      *      in="query",
      *      description="Auth code sent to user",
      *      required=true,
@@ -170,7 +170,7 @@ $app->group('/user', function () use ($app) {
      *     tags={"User APIs"},
      *     summary="Add a new plate",
      *     @SWG\Parameter(
-     *      name="code",
+     *      name="plate",
      *      in="body",
      *      description="Plate parameters",
      *      required=true,
@@ -330,6 +330,30 @@ $app->get('/swagger', function ($request, $response, $args) {
  *         description="State where license plate is registered",
  *         type="string"
  *     )
+ * )
+ *
+ */
+
+/**
+ * @SWG\Definition(
+ *     definition="EmailParameter",
+ *      required={"email"},
+ *     @SWG\Property(
+ *      property="email",
+ *      type="string",
+ *     ),
+ * )
+ *
+ */
+
+/**
+ * @SWG\Definition(
+ *     definition="CodeParameter",
+ *      required={"code"},
+ *     @SWG\Property(
+ *      property="code",
+ *      type="string",
+ *     ),
  * )
  *
  */
