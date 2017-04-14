@@ -5,6 +5,7 @@ use Illuminate\Container\Container;
 use App\Services\EmailService;
 use App\Services\PhoneService;
 use App\Services\UserService;
+use App\Services\MessageService;
 
 // DIC configuration
 
@@ -33,6 +34,10 @@ $container['phone_service'] = function ($c) {
 
 $container['user_service'] = function ($c) {
     return new UserService($c->get('logger'));
+};
+
+$container['message_service'] = function ($c) {
+    return new MessageService($c->get('logger'));
 };
 
 // bootstrap eloquent ORM

@@ -30,6 +30,7 @@ class UserController extends BaseController
             if ($user)
             {
                 $phone = $user_service->addPhone($user, $phone_number, $this->container->get('settings')['phone_auth_code_ttl']);
+
                 if ($phone)
                 {
                     if ($phone_service->send_text($phone_number, $phone['auth_code']))
@@ -59,7 +60,6 @@ class UserController extends BaseController
         $response = $response->withJson($message);
 
         return $response;
-
     }
 
     public function confirmPhone(ServerRequestInterface $request, ResponseInterface $response)

@@ -280,5 +280,28 @@ class UserService extends BaseService
 
         return false;
     }
+
+    /**
+     * @param $plate_id
+     * @return bool
+     */
+    public function getUserPhoneByPlate($plate_id)
+    {
+        try
+        {
+            return Plate::find($plate_id)->user->phone;
+        }
+        catch (QueryException $e)
+        {
+            $this->logger->error("DB exception: " . $e->getMessage() . ", query: " . $e->getSql());
+        }
+        catch (\Exception $e)
+        {
+            $this->logger->error(__FUNCTION__ . " failed, exception: " . $e->getMessage());
+        }
+
+        return false;
+
+    }
 }
 

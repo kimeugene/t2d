@@ -8,23 +8,17 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 
 
-class Plate extends Model
+class Message extends Model
 {
     use UuidModel;
     use SoftDeletes;
 
 
     protected $primaryKey = 'id';
-    protected $table = 'plates';
+    protected $table = 'messages';
     protected $dates = ['deleted_at'];
 
     public $incrementing = false;
 
-    /**
-     * Get the user that owns the plate.
-     */
-    public function user()
-    {
-        return $this->belongsTo('App\Models\User');
-    }
+
 }

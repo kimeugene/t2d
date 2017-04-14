@@ -20,5 +20,13 @@ class User extends Model
 
     public $incrementing = false;
 
+    /**
+     * Get the phone record associated with the user.
+     */
+    public function phone()
+    {
+        return $this->hasOne('App\Models\Phone');
+    }
+
 
 }

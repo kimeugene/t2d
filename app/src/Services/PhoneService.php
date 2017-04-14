@@ -10,8 +10,14 @@ use Aws\Exception\AwsException;
 
 class PhoneService extends BaseService
 {
-    public function send_text($phone_num, $auth_code)
+    /**
+     * @param $phone_num
+     * @param $text
+     * @return bool
+     */
+    public function send_text($phone_num, $text)
     {
+        // TODO: check if the phone if confirmed
         $this->logger->info("Senging text to: " . $phone_num);
 
         try
@@ -22,7 +28,7 @@ class PhoneService extends BaseService
             ]);
 
             $result = $client->publish([
-                'Message' => $auth_code,
+                'Message' => $text,
                 'PhoneNumber' => $phone_num,
             ]);
 
