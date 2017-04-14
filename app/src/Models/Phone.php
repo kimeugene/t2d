@@ -8,14 +8,14 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 
 
-class User extends Model
+class Phone extends Model
 {
     use UuidModel;
     use SoftDeletes;
 
 
     protected $primaryKey = 'id';
-    protected $table = 'users';
+    protected $table = 'phones';
     protected $dates = ['deleted_at'];
 
     public $incrementing = false;

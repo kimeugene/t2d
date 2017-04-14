@@ -32,7 +32,7 @@ $app->group('/user', function () use ($app) {
 
     /**
      * @SWG\Post(
-     *     path="/user/email/confirm",
+     *     path="/user/email/verify",
      *     tags={"User APIs"},
      *     summary="Authenticate existing user or create new user",
      *     @SWG\Parameter(
@@ -56,7 +56,7 @@ $app->group('/user', function () use ($app) {
      *     ),
      * )
      */
-    $app->post('/email/confirm', 'App\Controllers\UserController:confirmEmail');
+    $app->post('/email/verify', 'App\Controllers\UserController:verifyEmail');
 
     /**
      * @SWG\Post(
@@ -68,7 +68,7 @@ $app->group('/user', function () use ($app) {
      *      in="body",
      *      description="User phone number",
      *      required=true,
-     *      type="string",
+     *      @SWG\Schema(ref="#/definitions/PhoneParameter")
      *     ),
      *     @SWG\Response(
      *         response="200",
@@ -84,11 +84,7 @@ $app->group('/user', function () use ($app) {
      *     ),
      * )
      */
-    $app->post('/phone/auth', function ($request, $response, $args) {
-        $this->logger->info("Slim-Skeleton '/' route");
-
-        return json_encode([]);
-    });
+    $app->post('/phone/auth', 'App\Controllers\UserController:initPhoneAuth');
 
     /**
      * @SWG\Post(
@@ -100,7 +96,7 @@ $app->group('/user', function () use ($app) {
      *      in="body",
      *      description="Auth code sent to user",
      *      required=true,
-     *      type="string",
+     *      @SWG\Schema(ref="#/definitions/PhoneCodeParameter")
      *     ),
      *     @SWG\Response(
      *         response="200",
@@ -116,12 +112,7 @@ $app->group('/user', function () use ($app) {
      *     ),
      * )
      */
-    $app->post('/phone/confirm', function ($request, $response, $args) {
-        $this->logger->info("Slim-Skeleton '/' route");
-
-        return json_encode([]);
-    });
-
+    $app->post('/phone/confirm', 'App\Controllers\UserController:confirmPhone');
 
     /**
      * @SWG\Get(
@@ -194,18 +185,11 @@ $app->group('/user', function () use ($app) {
      *     tags={"User APIs"},
      *     summary="Delete a plate",
      *     @SWG\Parameter(
-     *      name="code",
-     *      in="body",
-     *      description="Auth code sent to user",
-     *      required=true,
-     *      type="string",
-     *     ),
-     *     @SWG\Parameter(
      *      name="plate",
      *      in="body",
-     *      description="License plate to delete",
+     *      description="Delete plate parameters",
      *      required=true,
-     *      type="string",
+     *      @SWG\Schema(ref="#/definitions/DeletePlateParameters")
      *     ),
      *     @SWG\Response(
      *         response="200",
@@ -262,22 +246,15 @@ $app->get('/plate/messages', function ($request, $response, $args) {
 
 /**
  * @SWG\Post(
- *     path="/plate/messages",
+ *     path="/plate/message",
  *     tags={"Public APIs"},
  *     summary="Post a plate message",
  *     @SWG\Parameter(
  *      name="plate",
  *      in="body",
- *      description="Plate you want the message to be sent to",
+ *      description="Plate message parameters",
  *      required=true,
- *      type="string",
- *     ),
- *     @SWG\Parameter(
- *      name="text",
- *      in="body",
- *      description="Message text",
- *      required=true,
- *      type="string",
+ *      @SWG\Schema(ref="#/definitions/PlateMessageParameters")
  *     ),
  *     @SWG\Response(
  *         response="200",
@@ -290,26 +267,31 @@ $app->get('/plate/messages', function ($request, $response, $args) {
 
  * )
  */
-$app->post('/plate/messages', function ($request, $response, $args) {
+$app->post('/plate/message', function ($request, $response, $args) {
 });
 
 
-
-$app->get('/', function ($request, $response, $args) {
-
-    echo "Hello";
-
-});
+$app->get('/swagger', 'App\Controllers\SwaggerController:generateDocs');
 
 
-$app->get('/swagger', function ($request, $response, $args) {
 
-    $swagger = \Swagger\scan(__DIR__);
-    header('Content-Type: application/json');
-    echo $swagger;
-
-});
-
+/**
+ * @SWG\Definition(
+ *     definition="PlateMessageParameters",
+ *      required={"plate"},
+ *     @SWG\Property(
+ *         property="message",
+ *         description="Message to post",
+ *         type="string"
+ *     ),
+ *     @SWG\Property(
+ *         property="plate",
+ *         description="License plate to post the message to",
+ *         type="string"
+ *     )
+ * )
+ *
+ */
 
 /**
  * @SWG\Definition(
@@ -336,6 +318,25 @@ $app->get('/swagger', function ($request, $response, $args) {
 
 /**
  * @SWG\Definition(
+ *     definition="DeletePlateParameters",
+ *      required={"code", "plate_id"},
+ *     @SWG\Property(
+ *         property="code",
+ *         description="Auth code to identify the user",
+ *         type="string"
+ *     ),
+ *     @SWG\Property(
+ *         property="plate_id",
+ *         description="License plate to delete",
+ *         type="string"
+ *     )
+ * )
+ *
+ */
+
+
+/**
+ * @SWG\Definition(
  *     definition="EmailParameter",
  *      required={"email"},
  *     @SWG\Property(
@@ -350,6 +351,38 @@ $app->get('/swagger', function ($request, $response, $args) {
  * @SWG\Definition(
  *     definition="CodeParameter",
  *      required={"code"},
+ *     @SWG\Property(
+ *      property="code",
+ *      type="string",
+ *     ),
+ * )
+ *
+ */
+
+/**
+ * @SWG\Definition(
+ *     definition="PhoneCodeParameter",
+ *      required={"code", "verification_code"},
+ *     @SWG\Property(
+ *      property="code",
+ *      type="string",
+ *     ),
+ *     @SWG\Property(
+ *      property="verification_code",
+ *      type="string",
+ *     ),
+ * )
+ *
+ */
+
+/**
+ * @SWG\Definition(
+ *     definition="PhoneParameter",
+ *      required={"phone"},
+ *     @SWG\Property(
+ *      property="phone",
+ *      type="string",
+ *     ),
  *     @SWG\Property(
  *      property="code",
  *      type="string",

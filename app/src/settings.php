@@ -30,7 +30,8 @@ return [
         ],
 
 
-        'auth_code_ttl' => 60 * 60 * 24 * 14,
+        'email_auth_code_ttl' => 60 * 60 * 24 * 14,
+        'phone_auth_code_ttl' => 60 * 10,
         'max_plates_allowed' => 2
     ],
 ];

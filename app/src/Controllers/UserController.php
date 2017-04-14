@@ -8,6 +8,98 @@ use Psr\Http\Message\ResponseInterface;
 
 class UserController extends BaseController
 {
+
+    public function initPhoneAuth(ServerRequestInterface $request, ResponseInterface $response)
+    {
+        $status = 500;
+        $message = ["message" => "Failed to send text message"];
+
+        try
+        {
+            $request_body = $request->getParsedBody();
+            $phone_number = $request_body['phone'];
+
+            /** @var \App\Services\UserService $user_service */
+            $user_service = $this->container->get('user_service');
+
+            /** @var \App\Services\PhoneService $phone_service */
+            $phone_service = $this->container->get('phone_service');
+
+            $user = $user_service->isValid($request_body['code']);
+
+            if ($user)
+            {
+                $phone = $user_service->addPhone($user, $phone_number, $this->container->get('settings')['phone_auth_code_ttl']);
+                if ($phone)
+                {
+                    if ($phone_service->send_text($phone_number, $phone['auth_code']))
+                    {
+                        $status = 200;
+                        $message = ["message" => "OK", "can_resend" => true];
+                    }
+                }
+                else
+                {
+                    $status = 500;
+                    $message = 'Cannot add phone';
+                }
+            }
+            else
+            {
+                $status = 401;
+                $message = ["message" => "Unauthorized"];
+            }
+        }
+        catch (\Exception $e)
+        {
+            $this->container->logger->error(sprintf('%s: %s', "Could not send text", $e->getMessage()));
+        }
+
+        $response = $response->withStatus($status);
+        $response = $response->withJson($message);
+
+        return $response;
+
+    }
+
+    public function confirmPhone(ServerRequestInterface $request, ResponseInterface $response)
+    {
+        $request_body = $request->getParsedBody();
+        $verification_code = $request_body["verification_code"];
+
+        if (empty($verification_code))
+        {
+            $status = 400;
+            $message = ["message" => "Missing verification code"];
+        }
+        else
+        {
+            /** @var \App\Services\UserService $user_service */
+            $user_service = $this->container->get('user_service');
+
+            $user = $user_service->isValid($request_body['code']);
+
+            if ($user)
+            {
+                $result = $user_service->confirmPhone($user, $verification_code);
+            }
+
+            if($result == true){
+                $status = 200;
+                $message = ["message" => "OK"];
+            }
+            else {
+                $status = 400;
+                $message = ["message" => "Invalid code"];
+            }
+        }
+
+        $response = $response->withStatus($status);
+        $response = $response->withJson($message);
+
+        return $response;
+    }
+
     /**
      * Initiate email authentication process, generate random code and send it to the provided email
      *
@@ -30,7 +122,7 @@ class UserController extends BaseController
             $user_service = $this->container->get('user_service');
             $user = $user_service->createOrUpdateUser(
                 $email,
-                $this->container->get('settings')['auth_code_ttl']
+                $this->container->get('settings')['email_auth_code_ttl']
             );
 
             if ($user)
@@ -46,16 +138,23 @@ class UserController extends BaseController
         }
         catch (\Exception $e)
         {
-            $this->logger->error(sprintf('%s: %s', "Could not send email", $e->getMessage()));
+            $this->container->logger->error(sprintf('%s: %s', "Could not send email", $e->getMessage()));
         }
 
         $response = $response->withStatus($status);
-        $response->getBody()->write(json_encode($message));
+        $response = $response->withJson($message);
 
         return $response;
     }
 
-    public function confirmEmail(ServerRequestInterface $request, ResponseInterface $response)
+    /**
+     * Verify email by code
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @return ResponseInterface|static
+     */
+    public function verifyEmail(ServerRequestInterface $request, ResponseInterface $response)
     {
         $request_body = $request->getParsedBody();
         $code = $request_body["code"];
@@ -69,7 +168,7 @@ class UserController extends BaseController
         {
             /** @var \App\Services\UserService $user_service */
             $user_service = $this->container->get('user_service');
-            $result = $user_service->confirmEmail($code);
+            $result = $user_service->verifyEmail($code);
 
             if($result == true){
                 $status = 200;
@@ -82,17 +181,26 @@ class UserController extends BaseController
         }
 
         $response = $response->withStatus($status);
-        $response->getBody()->write(json_encode($message));
+        $response = $response->withJson($message);
 
         return $response;
     }
 
+    /**
+     * Retrieve all user license plates
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @return ResponseInterface|static
+     */
     public function getPlates(ServerRequestInterface $request, ResponseInterface $response)
     {
         $params = $request->getQueryParams();
 
         if (isset($params['code']) && !empty($params['code']))
         {
+            $result['plates'] = [];
+
             /** @var \App\Services\UserService $user_service */
             $user_service = $this->container->get('user_service');
 
@@ -103,6 +211,7 @@ class UserController extends BaseController
                 foreach ($plates as $plate)
                 {
                     $result['plates'][] = [
+                        'plate_id' => $plate->id,
                         'plate' => $plate->plate,
                         'created' => $plate->created_at
                     ];
@@ -126,11 +235,18 @@ class UserController extends BaseController
 
 
         $response = $response->withStatus($status);
-        $response->getBody()->write(json_encode($message));
+        $response = $response->withJson($message);
 
         return $response;
     }
 
+    /**
+     * Add a license plate to an account
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @return ResponseInterface|static
+     */
     public function addPlate(ServerRequestInterface $request, ResponseInterface $response)
     {
         $request_body = $request->getParsedBody();
@@ -158,7 +274,47 @@ class UserController extends BaseController
         }
 
         $response = $response->withStatus($status);
-        $response->getBody()->write(json_encode($message));
+        $response = $response->withJson($message);
+
+        return $response;
+
+    }
+
+    /**
+     * Delete a plate
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @return ResponseInterface|static
+     */
+    public function deletePlate(ServerRequestInterface $request, ResponseInterface $response)
+    {
+        $request_body = $request->getParsedBody();
+        $code = $request_body['code'];
+
+        $status = 500;
+        $message = ["message" => "Cannot delete plate"];
+
+        /** @var \App\Services\UserService $user_service */
+        $user_service = $this->container->get('user_service');
+
+        $user = $user_service->isValid($code);
+        if ($user)
+        {
+            if ($user_service->deletePlate($user, $request_body['plate_id']))
+            {
+                $status = 200;
+                $message = "OK";
+            }
+        }
+        else
+        {
+            $status = 401;
+            $message = ["message" => "Unauthorized"];
+        }
+
+        $response = $response->withStatus($status);
+        $response = $response->withJson($message);
 
         return $response;
 

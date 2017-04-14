@@ -3,6 +3,7 @@ use Illuminate\Database\Capsule\Manager as Capsule;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Container\Container;
 use App\Services\EmailService;
+use App\Services\PhoneService;
 use App\Services\UserService;
 
 // DIC configuration
@@ -24,6 +25,10 @@ $container['logger'] = function ($c) {
 
 $container['email_service'] = function ($c) {
     return new EmailService($c->get('logger'));
+};
+
+$container['phone_service'] = function ($c) {
+    return new PhoneService($c->get('logger'));
 };
 
 $container['user_service'] = function ($c) {

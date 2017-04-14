@@ -11,7 +11,7 @@ class Preflight extends BaseMiddleware
     public function __invoke(ServerRequestInterface $request, ResponseInterface $response, $next)
     {
         // log API call on each request
-        $this->container->get('logger')->info("Route: " . $request->getUri());
+        $this->container->get('logger')->info("Route: [" . $request->getMethod() . "] " . $request->getUri());
         $response = $next($request, $response);
         return $response;
     }
