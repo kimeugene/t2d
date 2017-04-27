@@ -29,6 +29,14 @@ return [
             'prefix' => ''
         ],
 
+        'memcached' => [
+            'host'  => '127.0.0.1',
+            'port'  => 11211
+        ],
+
+        'email_cache_ttl' => 60,
+        'email_retry_attempts' => 2,
+
 
         'email_auth_code_ttl' => 60 * 60 * 24 * 14,
         'phone_auth_code_ttl' => 60 * 10,

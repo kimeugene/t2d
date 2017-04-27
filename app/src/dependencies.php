@@ -6,6 +6,7 @@ use App\Services\EmailService;
 use App\Services\PhoneService;
 use App\Services\UserService;
 use App\Services\MessageService;
+use App\Services\MemcachedService;
 
 // DIC configuration
 
@@ -38,6 +39,16 @@ $container['user_service'] = function ($c) {
 
 $container['message_service'] = function ($c) {
     return new MessageService($c->get('logger'));
+};
+
+$container['memcached'] = function ($c) {
+    $m = new \Memcached();
+    $m->addServer($c->get('settings')['memcached']['host'], $c->get('settings')['memcached']['port']);
+    return $m;
+};
+
+$container['memcached_service'] = function ($c) {
+    return new MemcachedService($c->get('logger'), $c['memcached']);
 };
 
 // bootstrap eloquent ORM

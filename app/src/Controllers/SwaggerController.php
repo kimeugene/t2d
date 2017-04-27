@@ -61,9 +61,9 @@ class SwaggerController extends BaseController
  *     tags={"User APIs"},
  *     summary="Authenticate existing user or create new user",
  *     @SWG\Parameter(
- *         name="email",
+ *         name="code",
  *         in="body",
- *         description="User email",
+ *         description="Auth code",
  *         required=true,
  *         @SWG\Schema(ref="#/definitions/CodeParameter")
  *     ),

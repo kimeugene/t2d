@@ -118,23 +118,59 @@ class UserController extends BaseController
             $request_body = $request->getParsedBody();
             $email = $request_body['email'];
 
-            /** @var \App\Services\UserService $user_service */
-            $user_service = $this->container->get('user_service');
-            $user = $user_service->createOrUpdateUser(
-                $email,
-                $this->container->get('settings')['email_auth_code_ttl']
-            );
 
-            if ($user)
-            {
-                /** @var \App\Services\EmailService $email_service */
-                $email_service = $this->container->get('email_service');
-                if ($email_service->send_email($email, $user['auth_code']))
+                /** @var \App\Services\UserService $user_service */
+                $user_service = $this->container->get('user_service');
+                $user = $user_service->createOrUpdateUser(
+                    $email,
+                    $this->container->get('settings')['email_auth_code_ttl']
+                );
+
+                if ($user)
                 {
-                    $status = 200;
-                    $message = ["message" => "OK", "can_resend" => true];
+                    /** @var \App\Services\EmailService $email_service */
+                    $email_service = $this->container->get('email_service');
+
+
+                    // check if this email in memcached
+                    /** @var \App\Services\MemcachedService $memcached_service */
+                    $memcached_service = $this->container->get('memcached_service');
+                    $attempts = $memcached_service->get($email);
+
+                    if ($attempts === false)
+                    {
+                        $this->container->logger->info("Email ( " . $email . ") not found in cache");
+                        $memcached_service->set($email, 0, $this->container->get('settings')['email_cache_ttl']);
+                        $attempts = 0;
+                    }
+
+                    if ($attempts >= $this->container->get('settings')['email_retry_attempts'])
+                    {
+                        $this->container->logger->info("Found " . $attempts . " attempts for email: " . $email . ", can't send anymore");
+                        $status = 403;
+                        $message = "Cannot send email anymore, please try later";
+                    }
+                    else
+                    {
+                        $this->container->logger->info("Email ( " . $email . ") found in cache, attempts: " . $attempts);
+
+                        if ($email_service->send_email($email, $user['auth_code']))
+                        {
+                            $attempts ++;
+                            $this->container->logger->info("Settings " . $attempts . " attempts for email: " . $email);
+                            $memcached_service->replace($email, $attempts);
+
+                            $can_resend = false;
+                            if ($attempts < $this->container->get('settings')['email_retry_attempts'])
+                            {
+                                $can_resend = true;
+                            }
+                            $status = 200;
+                            $message = ["message" => "OK", "can_resend" => $can_resend];
+                        }
+
+                    }
                 }
-            }
         }
         catch (\Exception $e)
         {
