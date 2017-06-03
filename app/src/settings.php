@@ -13,24 +13,24 @@ return [
         // Monolog settings
         'logger' => [
             'name' => 'slim-app',
-            'path' => '/var/www/logs/app.log',
+            'path' => 'php://stdout',
             'level' => \Monolog\Logger::DEBUG,
         ],
 
         // database
         'db' => [
             'driver' => 'mysql',
-            'host' => '127.0.0.1',
+            'host' => 'local.db.cartexted.com',
             'database' => 't2d',
             'username' => 'root',
-            'password' => '',
+            'password' => 'root',
             'collation' => 'utf8_general_ci',
             'charset'   => 'utf8',
             'prefix' => ''
         ],
 
         'memcached' => [
-            'host'  => '127.0.0.1',
+            'host'  => 'local.cache.cartexted.com',
             'port'  => 11211
         ],
 

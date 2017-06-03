@@ -40,6 +40,7 @@ class MemcachedService extends BaseService
 
     public function replace($key, $value)
     {
+        $this->logger->info("replacing " . $value . " under key: " . $key);
         if (!$this->connection->replace($key, $value))
         {
             throw new Exception("Cannot save to memcached");

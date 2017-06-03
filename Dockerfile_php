@@ -1,0 +1,14 @@
+FROM php:7.0-fpm
+
+RUN pecl install igbinary && docker-php-ext-enable igbinary && docker-php-ext-install pdo_mysql
+
+COPY ./etc/docker/memcached.ini /usr/local/etc/php/conf.d/docker-php-ext-memcached.ini
+
+COPY ./etc/docker/amazon-elasticache-cluster-client.so /usr/local/lib/php/extensions/no-debug-non-zts-20151012/
+
+EXPOSE 9000
+
+COPY . /var/www/t2d/
+
+CMD ["php-fpm"]
+
